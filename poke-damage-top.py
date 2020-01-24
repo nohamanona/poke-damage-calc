@@ -1,10 +1,12 @@
 import cv2
 import numpy as np
 import pandas as pd
+import wx
 
 from capture.video_capture import VideoCapture
 from capture.video_read import VideoRead
 from capture.videoinput_wrapper import VideoInputWrapper
+from wx_top import Mywin
 
 from ocr.ocr import Ocr
 
@@ -23,13 +25,10 @@ if mode =="video capture":
         capture.set_frame_rate()
         capture.select_source(name=capture.DEV_AMAREC)
     else:
-        debug_file = 'D:\\amarec\\test2.mp4'
+        debug_file = 'D:\\amarec\\対戦37.mp4'
         capture = cv2.VideoCapture(debug_file)
         capture.set(3, 1280)
         capture.set(4, 720)
-
-
-
 
     k=0
 
@@ -50,8 +49,8 @@ if mode =="video capture":
                 r=1
         else:
             r, frame = capture.read()
-
-
+            if not r:
+                continue
 
         #fps
         if count == max_count:
@@ -66,7 +65,26 @@ if mode =="video capture":
         if frame is not None:
         #if frame is not None:
             cv2.imshow("fl", frame)
-        k = cv2.waitKey(1)
+        k = cv2.waitKey(3)
+
+        if k == ord('t'):
+            img_enemy_poke = frame[30:60,970:1103,:]
+            img_enemy_hp = frame[63:72,979:1245,:]
+            img_my_poke = frame[625:655,5:138,:]
+            img_my_hp = frame[655:663,15:281,:]
+            img_enemy_hp_gray = cv2.cvtColor(img_enemy_hp, cv2.COLOR_BGR2GRAY)
+            img_enemy_hp_sobel = cv2.Sobel(img_enemy_hp_gray, cv2.CV_8U,1,0,ksize=3)
+            enemy_hp = (np.argmax(img_enemy_hp_sobel,axis=1)[0]+1)/img_enemy_hp_sobel.shape[1]
+            print(enemy_hp)
+            cv2.imshow('img_enemy_hp', img_enemy_hp)
+            cv2.imshow('img_enemy_poke', img_enemy_poke)
+            print(np.argmax(img_enemy_hp_sobel,axis=1))
+            cv2.imwrite('img_enemy_hp_sobel.png',img_enemy_hp_sobel)
+
+            ocr = Ocr()
+            enemy_poke_name = ocr.ocr_image2txt(img_enemy_poke)
+            print("enemy poke: ",enemy_poke_name)
+
 
 elif mode == "image capture":
     if debug == 0:
@@ -101,5 +119,17 @@ elif mode == "image capture":
         ocr = Ocr()
         enemy_poke_name = ocr.ocr_image2txt(img_enemy_poke)
         my_poke_name = ocr.ocr_image2txt(img_my_poke)
+        if my_poke_name =="ロロトム":
+            my_poke_name ="ロトム"
         print("enemy poke: ",enemy_poke_name)
         print("my poke: ",my_poke_name)
+        print(all_poke_data[all_poke_data["name"]==enemy_poke_name])
+        print(all_poke_data[all_poke_data["name"]==my_poke_name])
+        my_data=all_poke_data[all_poke_data["name"]==my_poke_name]
+        print(my_data.iloc[0,1],type(my_data.iloc[0,1]))
+
+        app=wx.App()
+        win=Mywin(None,'Drawing test')
+        win.get_my_base_stats(str(my_data.iloc[0,1]),str(my_data.iloc[0,2]),str(my_data.iloc[0,3]),str(my_data.iloc[0,4]),str(my_data.iloc[0,5]),str(my_data.iloc[0,6]))
+        app.MainLoop()
+        

@@ -7,14 +7,15 @@ from capture.video_capture import VideoCapture
 from capture.video_read import VideoRead
 from capture.videoinput_wrapper import VideoInputWrapper
 from wx_top import Mywin
+from pokemon import Pokemon
 
 from ocr.ocr import Ocr
 
 debug = 1
-mode ="image capture"# "video capture"
+mode = "video capture"#"image capture"# "video capture"
 in_image_file = "D:/amarec/pic/amarec(20191228-161218).bmp"
 all_poke_data = pd.read_csv("all_poke_data.csv",encoding="SHIFT-JIS")
-print(all_poke_data)
+#print(all_poke_data)
 
 print('-------------------------start poke damage calculate---------------------------')
 if mode =="video capture":
@@ -69,9 +70,9 @@ if mode =="video capture":
 
         if k == ord('t'):
             img_enemy_poke = frame[30:60,970:1103,:]
-            img_enemy_hp = frame[63:72,979:1245,:]
+            img_enemy_hp = frame[64:72,980:1245,:]
             img_my_poke = frame[625:655,5:138,:]
-            img_my_hp = frame[655:663,15:281,:]
+            img_my_hp = frame[655:663,16:281,:]
             img_enemy_hp_gray = cv2.cvtColor(img_enemy_hp, cv2.COLOR_BGR2GRAY)
             img_enemy_hp_sobel = cv2.Sobel(img_enemy_hp_gray, cv2.CV_8U,1,0,ksize=3)
             enemy_hp = (np.argmax(img_enemy_hp_sobel,axis=1)[0]+1)/img_enemy_hp_sobel.shape[1]
@@ -80,6 +81,8 @@ if mode =="video capture":
             cv2.imshow('img_enemy_poke', img_enemy_poke)
             print(np.argmax(img_enemy_hp_sobel,axis=1))
             cv2.imwrite('img_enemy_hp_sobel.png',img_enemy_hp_sobel)
+            cv2.imwrite('img_enemy_hp.png',img_enemy_hp)
+            cv2.imwrite('img_enemy_poke.png',img_enemy_poke)
 
             ocr = Ocr()
             enemy_poke_name = ocr.ocr_image2txt(img_enemy_poke)
@@ -95,9 +98,9 @@ elif mode == "image capture":
         cv2.waitKey(0)
 
         img_enemy_poke = img[30:60,970:1103,:]
-        img_enemy_hp = img[63:72,979:1245,:]
+        img_enemy_hp = img[63:72,980:1245,:]
         img_my_poke = img[625:655,5:138,:]
-        img_my_hp = img[655:663,15:281,:]
+        img_my_hp = img[655:663,16:281,:]
         cv2.imshow('img_enemy_poke', img_enemy_poke)
         cv2.imshow('img_enemy_hp', img_enemy_hp)
         cv2.imshow('img_my_poke', img_my_poke)
@@ -127,6 +130,10 @@ elif mode == "image capture":
         print(all_poke_data[all_poke_data["name"]==my_poke_name])
         my_data=all_poke_data[all_poke_data["name"]==my_poke_name]
         print(my_data.iloc[0,1],type(my_data.iloc[0,1]))
+
+        enemy_pokemon=Pokemon()
+        enemy_pokemon.set_base_stats([my_data.iloc[0,1],my_data.iloc[0,2],my_data.iloc[0,3],my_data.iloc[0,4],my_data.iloc[0,5],my_data.iloc[0,6]])
+        print(enemy_pokemon._stats_h)
 
         app=wx.App()
         win=Mywin(None,'Drawing test')
